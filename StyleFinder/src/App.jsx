@@ -15,8 +15,9 @@ function App() {
 
   const handleImageUpload = async (imageFile) => {
     setIsLoading(true);
-    setError(null);
     setHasSearched(true);
+    setError(null);
+    
 
     try {
       const results = await searchSimilarProducts(imageFile, selectedCategory);
