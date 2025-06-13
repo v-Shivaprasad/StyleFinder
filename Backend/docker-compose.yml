@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  api:
+    build: .
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - FASTAPI_URL=https://c9c2-35-196-112-247.ngrok-free.app
+      - PORT=3000
+    depends_on:
+      - redis
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: node worker.js
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - FASTAPI_URL=https://c9c2-35-196-112-247.ngrok-free.app
+      - MAX_CONCURRENT_JOBS=2
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  redis_data:
